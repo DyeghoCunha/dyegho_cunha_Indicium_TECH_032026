@@ -1,0 +1,39 @@
+name: 'northwind_analytics'
+version: '1.0.0'
+config-version: 2
+
+profile: 'northwind_traders'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  northwind_analytics:
+
+    silver:
+      +catalog: "{{ var('catalog', 'indicium_dev') }}"
+      +schema: silver
+    gold:
+      +catalog: "{{ var('catalog', 'indicium_dev') }}"
+      +schema: gold
+    bronze:
+      +catalog: "{{ var('catalog', 'indicium_dev') }}"
+      +schema: bronze
+
+vars:
+  catalog: "indicium_dev" 
+  nao_inf: "'Não Informado'"
+  date_default: "'1960-01-01'"
+  vazio: "''"
+
+
+on-run-end:
+  - "{{ log_dbt_results(results) }}"

@@ -1,0 +1,223 @@
+version: 2
+
+sources:
+  - name: erp_northwind
+    description: "Camada Bronze contendo os dados brutos extraídos do ERP PostgreSQL. Fonte de verdade para a Medallion Architecture."
+    catalog: "{{ var('catalog', 'indicium_dev') }}"
+    schema: bronze
+    loader: pyspark_ingestion
+    loaded_at_field: _insert_date
+    
+    config:
+      severity: warn
+
+    tables:
+      - name: categories
+        description: "Categorias de produtos da Northwind."
+        columns:
+          - name: category_id
+            data_tests: [unique, not_null]
+          - name: category_name
+          - name: description
+          - name: picture
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: customer_customer_demo
+        description: "Relacionamento entre clientes e tipos demográficos (N:N)."
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns: [customer_id, customer_type_id]
+        columns:
+          - name: customer_id
+          - name: customer_type_id
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: customer_demographics
+        description: "Descrições de agrupamentos demográficos de clientes."
+        columns:
+          - name: customer_type_id
+            data_tests: [unique, not_null]
+          - name: customer_desc
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: customers
+        description: "Cadastro mestre de clientes."
+        columns:
+          - name: customer_id
+            data_tests: [unique, not_null]
+          - name: company_name
+          - name: contact_name
+          - name: contact_title
+          - name: address
+          - name: city
+          - name: region
+          - name: postal_code
+          - name: country
+          - name: phone
+          - name: fax
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: employee_territories
+        description: "Mapeamento de funcionários por território de atuação."
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns: [employee_id, territory_id]
+        columns:
+          - name: employee_id
+          - name: territory_id
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: employees
+        description: "Dados cadastrais e hierárquicos dos funcionários."
+        columns:
+          - name: employee_id
+            data_tests: [unique, not_null]
+          - name: last_name
+          - name: first_name
+          - name: title
+          - name: title_of_courtesy
+          - name: birth_date
+          - name: hire_date
+          - name: address
+          - name: city
+          - name: region
+          - name: postal_code
+          - name: country
+          - name: home_phone
+          - name: extension
+          - name: photo
+          - name: notes
+          - name: reports_to
+          - name: photo_path
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: order_details
+        description: "Detalhamento dos itens vendidos em cada pedido."
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns: [order_id, product_id]
+        columns:
+          - name: order_id
+          - name: product_id
+          - name: unit_price
+          - name: quantity
+          - name: discount
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: orders
+        description: "Cabeçalho dos pedidos e informações logísticas."
+        columns:
+          - name: order_id
+            data_tests: [unique, not_null]
+          - name: customer_id
+          - name: employee_id
+          - name: order_date
+          - name: required_date
+          - name: shipped_date
+          - name: ship_via
+          - name: freight
+          - name: ship_name
+          - name: ship_address
+          - name: ship_city
+          - name: ship_region
+          - name: ship_postal_code
+          - name: ship_country
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: products
+        description: "Catálogo de produtos da Northwind."
+        columns:
+          - name: product_id
+            data_tests: [unique, not_null]
+          - name: product_name
+          - name: supplier_id
+          - name: category_id
+          - name: quantity_per_unit
+          - name: unit_price
+          - name: units_in_stock
+          - name: units_on_order
+          - name: reorder_level
+          - name: discontinued
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: region
+        description: "Cadastro de regiões geográficas."
+        columns:
+          - name: region_id
+            data_tests: [unique, not_null]
+          - name: region_description
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: shippers
+        description: "Transportadoras (Shippers) utilizadas."
+        columns:
+          - name: shipper_id
+            data_tests: [unique, not_null]
+          - name: company_name
+          - name: phone
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: suppliers
+        description: "Fornecedores de produtos."
+        columns:
+          - name: supplier_id
+            data_tests: [unique, not_null]
+          - name: company_name
+          - name: contact_name
+          - name: contact_title
+          - name: address
+          - name: city
+          - name: region
+          - name: postal_code
+          - name: country
+          - name: phone
+          - name: fax
+          - name: homepage
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: territories
+        description: "Territórios de venda vinculados a regiões."
+        columns:
+          - name: territory_id
+            data_tests: [unique, not_null]
+          - name: territory_description
+          - name: region_id
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
+
+      - name: us_states
+        description: "Mapeamento de estados dos Estados Unidos."
+        columns:
+          - name: state_id
+            data_tests: [unique, not_null]
+          - name: state_name
+          - name: state_abbr
+          - name: state_region
+          - name: _source_file
+          - name: _insert_date
+          - name: _system_source
