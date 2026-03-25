@@ -4,7 +4,7 @@ sources:
   - name: erp_northwind
     description: "Camada Bronze contendo os dados brutos extraídos do ERP PostgreSQL. Fonte de verdade para a Medallion Architecture."
     catalog: "{{ var('catalog', 'indicium_dev') }}"
-    schema: bronze
+    schema: landing 
     loader: pyspark_ingestion
     loaded_at_field: _insert_date
     
