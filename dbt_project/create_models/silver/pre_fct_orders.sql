@@ -22,4 +22,4 @@ TBLPROPERTIES (
     'delta.autoOptimize.autoCompact'='auto',
     'spark.databricks.delta.autoCompact.enabled'='true'
 );
-COMMENT ON TABLE pre_fct_orders IS 'Tabela Silver de Cabeçalho de Pedidos (Orders)';
+COMMENT ON TABLE pre_fct_orders IS 'Fato de Pedidos (Cabeçalho): Registra o evento de compra, datas de SLA (promessa vs entrega) e custos de frete. Grão: 1 linha por Pedido.';

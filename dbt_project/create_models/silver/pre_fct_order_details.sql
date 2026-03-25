@@ -13,4 +13,4 @@ TBLPROPERTIES (
     'delta.autoOptimize.autoCompact'='auto',
     'spark.databricks.delta.autoCompact.enabled'='true'
 );
-COMMENT ON TABLE pre_fct_order_details IS 'Tabela Silver de Itens do Pedido (Order Details)';
+COMMENT ON TABLE pre_fct_order_details IS 'Fato de Itens do Pedido: Registra o faturamento real, descontos e volume vendido por produto. Grão: 1 linha por SKU dentro de um Pedido.';

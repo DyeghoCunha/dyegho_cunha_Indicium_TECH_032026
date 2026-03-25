@@ -20,3 +20,5 @@ TBLPROPERTIES (
     'delta.autoOptimize.autoCompact'='auto',
     'spark.databricks.delta.autoCompact.enabled'='true'
 );
+
+COMMENT ON TABLE pre_dim_suppliers IS 'Dimensão de Fornecedores: Dados cadastrais das empresas que fornecem os produtos vendidos pela Northwind.';

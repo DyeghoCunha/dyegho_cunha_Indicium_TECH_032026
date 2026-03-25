@@ -19,4 +19,4 @@ TBLPROPERTIES (
     'delta.autoOptimize.autoCompact'='auto',
     'spark.databricks.delta.autoCompact.enabled'='true'
 );
-COMMENT ON TABLE pre_dim_customers IS 'Tabela Silver de Clientes';
+COMMENT ON TABLE pre_dim_customers IS 'Dimensão de Clientes: Contém os dados cadastrais, localização e contatos dos clientes B2B da Northwind.';

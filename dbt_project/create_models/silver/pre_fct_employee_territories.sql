@@ -10,3 +10,5 @@ TBLPROPERTIES (
     'delta.autoOptimize.autoCompact'='auto',
     'spark.databricks.delta.autoCompact.enabled'='true'
 );
+
+COMMENT ON TABLE pre_fct_employee_territories IS 'Tabela Fato/Ponte (Bridge): Relaciona (N:N) os funcionários aos territórios que eles cobrem.';

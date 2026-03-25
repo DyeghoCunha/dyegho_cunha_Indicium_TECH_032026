@@ -12,3 +12,5 @@ TBLPROPERTIES (
     'delta.autoOptimize.autoCompact'='auto',
     'spark.databricks.delta.autoCompact.enabled'='true'
 );
+
+COMMENT ON TABLE pre_dim_categories IS 'Dimensão de Categorias: Agrupamento macro dos produtos (ex: Bebidas, Condimentos). Usada para análise de mix de produtos.';

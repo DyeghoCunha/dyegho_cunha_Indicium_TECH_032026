@@ -10,3 +10,4 @@ TBLPROPERTIES (
     'delta.autoOptimize.autoCompact'='auto',
     'spark.databricks.delta.autoCompact.enabled'='true'
 );
+COMMENT ON TABLE pre_dim_region IS 'Dimensão de Região: Agrupamentos macro-geográficos para análise de performance regional.';

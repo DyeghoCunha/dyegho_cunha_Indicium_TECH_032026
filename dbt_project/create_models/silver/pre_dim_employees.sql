@@ -24,3 +24,5 @@ TBLPROPERTIES (
     'delta.autoOptimize.autoCompact'='auto',
     'spark.databricks.delta.autoCompact.enabled'='true'
 );
+
+COMMENT ON TABLE pre_dim_employees IS 'Dimensão de Funcionários: Hierarquia de vendas e dados demográficos do time interno da Northwind.';

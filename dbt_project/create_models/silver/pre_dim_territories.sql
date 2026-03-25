@@ -11,3 +11,5 @@ TBLPROPERTIES (
     'delta.autoOptimize.autoCompact'='auto',
     'spark.databricks.delta.autoCompact.enabled'='true'
 );
+
+COMMENT ON TABLE pre_dim_territories IS 'Dimensão de Territórios: Subdivisões das regiões onde os funcionários atuam.';

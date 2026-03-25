@@ -18,4 +18,4 @@ TBLPROPERTIES (
     'delta.autoOptimize.autoCompact'='auto',
     'spark.databricks.delta.autoCompact.enabled'='true'
 );
-COMMENT ON TABLE pre_dim_products IS 'Tabela Silver de Produtos';
+COMMENT ON TABLE pre_dim_products IS 'Dimensão de Produtos: Catálogo de SKUs vendidos, incluindo preço base e status de descontinuação (SCD1).';
