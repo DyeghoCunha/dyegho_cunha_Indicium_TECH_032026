@@ -12,8 +12,8 @@ except:
 # COMMAND ----------
 
 CATALOG = f"indicium_{env}"
-LANDING_VOLUME = f"/Volumes/{CATALOG}/bronze/landing_erp/"
-SCHEMA_BRONZE = f"{CATALOG}.bronze"
+LANDING_VOLUME = f"/Volumes/{CATALOG}/landing/landing_erp/"
+SCHEMA_LANDING = f"{CATALOG}.landing"
 
 # COMMAND ----------
 
@@ -30,7 +30,7 @@ tables_to_ingest = [
 def ingest_table_to_bronze_uc(table_name):
     print(f"[{env.upper()}] Ingerindo: {table_name}...")
     source_file = f"{LANDING_VOLUME}{table_name}.csv"
-    uc_table_name = f"{SCHEMA_BRONZE}.{table_name}"
+    uc_table_name = f"{SCHEMA_LANDING}.{table_name}"
     
     try:
         df = spark.read.format("csv") \
