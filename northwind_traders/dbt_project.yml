@@ -30,6 +30,10 @@ models:
       +catalog: "{{ var('catalog', 'indicium_dev') }}"
       +schema: bronze
       +materialized: view
+    intermediate:
+      +catalog: "{{ var('catalog', 'indicium_dev') }}"
+      +schema: intermediate
+      +materialized: table
 
 vars:
   catalog: "indicium_dev" 
