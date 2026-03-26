@@ -26,3 +26,31 @@ TBLPROPERTIES (
 );
 
 COMMENT ON TABLE pre_dim_employees IS 'Dimensão de Funcionários: Hierarquia de vendas e dados demográficos do time interno da Northwind.';
+
+-- TASK 2: FIX -- Insere Ghost Row
+INSERT INTO pre_dim_employees (
+    emp_employee_id, emp_last_name, emp_first_name, emp_title, emp_title_of_courtesy, 
+    emp_birth_date, emp_hire_date, emp_address, emp_city, emp_region, emp_postal_code, 
+    emp_country, emp_home_phone, emp_extension, emp_reports_to, emp_notes,emp_insert_date,bronze_insert_date
+
+
+) VALUES (
+    -1, 
+    'Não Informado', 
+    'Não Informado', 
+    'Não Informado', 
+    'Não Informado', 
+    '1900-01-01', 
+    '1900-01-01', 
+    'Não Informado', 
+    'Não Informado', 
+    'Não Informado', 
+    'Não Informado', 
+    'Não Informado', 
+    'Não Informado', 
+    'Não Informado', 
+    -1, 
+    'integridade referencial (Ghost Row)'
+    '1900-01-01',
+    '1900-01-01',
+);
