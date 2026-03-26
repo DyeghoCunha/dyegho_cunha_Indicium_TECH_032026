@@ -1,5 +1,5 @@
 {{ config(
-  materialized = 'incremental',
+  materialized = 'table',
   incremental_strategy = 'merge',
   unique_key = 'ord_order_id',
   tags = ['silver', 'fato']
@@ -12,9 +12,7 @@ SELECT
   COALESCE(CAST(ship_via AS INT), -1) AS shp_shipper_id,
   COALESCE(CAST(order_date AS DATE), {{ var('date_default') }}) AS ord_order_date,
   COALESCE(CAST(required_date AS DATE), {{ var('date_default') }}) AS ord_required_date,
-  CAST(
-    shipped_date AS DATE
-  ) AS ord_shipped_date,
+  COALESCE(CAST(shipped_date AS DATE),{{ var('date_default') }}) AS ord_shipped_date,
   COALESCE(CAST(freight AS DECIMAL(10, 2)), 0.0) AS ord_freight,
   COALESCE(CAST(ship_name AS STRING), {{ var('nao_inf') }}) AS ord_ship_name,
   COALESCE(CAST(ship_address AS STRING), {{ var('nao_inf') }}) AS ord_ship_address,
@@ -31,11 +29,13 @@ FROM
     'brz_erp_orders'
   ) }}
 
-{% if is_incremental() %}
-WHERE
-  _insert_date > (
-    SELECT
-      COALESCE(MAX(bronze_insert_date), CAST({{ var('date_default') }} AS TIMESTAMP))
-    FROM
-      {{ this }})
-    {% endif %}
+-- {% if is_incremental() %}
+-- WHERE
+--   CAST(
+--     _insert_date AS TIMESTAMP
+--   ) > (
+--     SELECT
+--       COALESCE(MAX(bronze_insert_date), CAST({{ var('date_default') }} AS TIMESTAMP))
+--     FROM
+--       {{ this }})
+--     {% endif %}

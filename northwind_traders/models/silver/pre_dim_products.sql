@@ -18,7 +18,7 @@ SELECT
   COALESCE(CAST(discontinued AS INT), 0) AS prd_is_discontinued,
   CAST(
     _insert_date AS TIMESTAMP
-  ) AS prd_bronze_insert_date,
+  ) AS bronze_insert_date,
   from_utc_timestamp(now(), 'GMT-3') AS prd_insert_date
 FROM
   {{ ref(
@@ -27,9 +27,11 @@ FROM
 
 {% if is_incremental() %}
 WHERE
-  _insert_date > (
+  CAST(
+    _insert_date AS TIMESTAMP
+  ) > (
     SELECT
-      COALESCE(MAX(prd_bronze_insert_date), '1900-01-01')
+      COALESCE(MAX(bronze_insert_date), CAST({{ var('date_default') }} AS TIMESTAMP))
     FROM
       {{ this }})
     {% endif %}

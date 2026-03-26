@@ -19,7 +19,7 @@ SELECT
   COALESCE(CAST(fax AS STRING), {{ var('nao_inf') }}) AS ctm_fax,
   CAST(
     _insert_date AS TIMESTAMP
-  ) AS ctm_bronze_insert_date,
+  ) AS bronze_insert_date,
   from_utc_timestamp(now(), 'GMT-3') AS ctm_insert_date
 FROM
   {{ ref(
@@ -28,9 +28,11 @@ FROM
 
 {% if is_incremental() %}
 WHERE
-  _insert_date > (
+  CAST(
+    _insert_date AS TIMESTAMP
+  ) > (
     SELECT
-      COALESCE(MAX(ctm_bronze_insert_date), '1900-01-01')
+      COALESCE(MAX(bronze_insert_date), CAST({{ var('date_default') }} AS TIMESTAMP))
     FROM
       {{ this }})
     {% endif %}

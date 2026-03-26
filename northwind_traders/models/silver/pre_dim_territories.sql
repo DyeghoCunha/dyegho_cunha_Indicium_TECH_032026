@@ -20,7 +20,9 @@ FROM
 
 {% if is_incremental() %}
 WHERE
-  _insert_date > (
+  CAST(
+    _insert_date AS TIMESTAMP
+  ) > (
     SELECT
       COALESCE(MAX(bronze_insert_date), CAST({{ var('date_default') }} AS TIMESTAMP))
     FROM

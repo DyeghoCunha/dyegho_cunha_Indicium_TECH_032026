@@ -27,14 +27,13 @@ SELECT
     ) AS bronze_insert_date,
     from_utc_timestamp(now(), 'GMT-3') AS emp_insert_date
 FROM
-    {{ source(
-        'erp_northwind',
-        'employees'
-    ) }}
+    {{ ref('brz_erp_employees') }}
 
 {% if is_incremental() %}
 WHERE
-    _insert_date > (
+    CAST(
+        _insert_date AS TIMESTAMP
+    ) > (
         SELECT
             COALESCE(MAX(bronze_insert_date), CAST({{ var('date_default') }} AS TIMESTAMP))
         FROM
