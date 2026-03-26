@@ -19,6 +19,7 @@ SELECT
   _insert_date,
   _system_source
 FROM
-  {{ ref(
-    'brz_erp_customers'
+  {{ source(
+    'erp_northwind',
+    'customers'
   ) }}
