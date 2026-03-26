@@ -1,0 +1,836 @@
+version: 2
+
+models:
+  - name: pre_fct_orders
+    description: "Cabeçalho de pedidos de venda. Contém datas, transportadora e custos logísticos."
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "ord_order_date <= ord_required_date"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "ord_order_date <= ord_shipped_date OR ord_shipped_date = cast({{ var('date_default') }} as date)"
+    columns:
+      - name: ord_order_id
+        description: "Código do pedido (Chave Primária)."
+        data_tests:
+          - unique
+          - not_null
+      - name: ctm_customer_id
+        description: "Chave Estrangeira para a dimensão de Clientes."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+          - relationships:
+              arguments:
+                to: ref('pre_dim_customers')
+                field: ctm_customer_id
+      - name: emp_employee_id
+        description: "Chave Estrangeira para a dimensão de Funcionários."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('pre_dim_employees')
+                field: emp_employee_id
+      - name: shp_shipper_id
+        description: "Chave Estrangeira para Transportadoras."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('pre_dim_shippers')
+                field: shp_shipper_id
+      - name: ord_order_date
+        description: "Data de realização do pedido."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as date)"
+                max_value: "cast('2030-12-31' as date)"
+      - name: ord_required_date
+        description: "Data prevista para entrega."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as date)"
+                max_value: "cast('2030-12-31' as date)"
+      - name: ord_shipped_date
+        description: "Data real de envio da mercadoria."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast({{ var('date_default') }} as date)"
+                max_value: "cast('2030-12-31' as date)"
+      - name: ord_freight
+        description: "Valor cobrado pelo frete."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: ord_ship_name
+        description: "Nome do destinatário no local de entrega."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ord_ship_address
+        description: "Endereço de entrega."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ord_ship_city
+        description: "Cidade de entrega."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ord_ship_region
+        description: "Estado ou região de entrega."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ord_ship_postal_code
+        description: "Código postal de entrega."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ord_ship_country
+        description: "País de entrega."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ord_insert_date
+        description: "Data/Hora de atualização na camada Silver."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_fct_order_details
+    description: "Itens de linha dos pedidos. Regista produtos, preços unitários e descontos."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [ord_order_id, prd_product_id]
+    columns:
+      - name: ord_order_id
+        description: "Chave Estrangeira para o Pedido."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('pre_fct_orders')
+                field: ord_order_id
+      - name: prd_product_id
+        description: "Chave Estrangeira para o Produto."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('pre_dim_products')
+                field: prd_product_id
+      - name: odt_unit_price
+        description: "Preço unitário cobrado no momento da venda."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: odt_quantity
+        description: "Quantidade de itens comprados."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+      - name: odt_discount
+        description: "Desconto aplicado sobre o preço base."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: odt_insert_date
+        description: "Data/Hora de atualização na camada Silver."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_fct_employee_territories
+    description: "Tabela ponte que mapeia funcionários aos territórios onde atuam."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [emp_employee_id, ter_territory_id]
+    columns:
+      - name: emp_employee_id
+        description: "Chave Estrangeira para Funcionários."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('pre_dim_employees')
+                field: emp_employee_id
+      - name: ter_territory_id
+        description: "Chave Estrangeira para Territórios."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+          - relationships:
+              arguments:
+                to: ref('pre_dim_territories')
+                field: ter_territory_id
+      - name: etr_insert_date
+        description: "Data/Hora de atualização na camada Silver."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_fct_customer_customer_demo
+    description: "Tabela ponte entre clientes e segmentos demográficos."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [ctm_customer_id, cdm_customer_type_id]
+    columns:
+      - name: ctm_customer_id
+        description: "Chave Estrangeira para Clientes."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+          - relationships:
+              arguments:
+                to: ref('pre_dim_customers')
+                field: ctm_customer_id
+      - name: cdm_customer_type_id
+        description: "Chave Estrangeira para Demografia."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+          - relationships:
+              arguments:
+                to: ref('pre_dim_customer_demographics')
+                field: cdm_customer_type_id
+      - name: ccd_insert_date
+        description: "Data/Hora de atualização na camada Silver."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_dim_customers
+    description: "Cadastro consolidado de clientes."
+    columns:
+      - name: ctm_customer_id
+        description: "Código original do cliente."
+        data_tests:
+          - unique
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              arguments:
+                min_value: 5
+                max_value: 5
+      - name: ctm_company_name
+        description: "Razão Social da empresa."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ctm_contact_name
+        description: "Nome do ponto de contacto principal."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ctm_contact_title
+        description: "Cargo do contacto principal."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ctm_address
+        description: "Morada da empresa."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ctm_city
+        description: "Cidade da empresa."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ctm_region
+        description: "Estado ou região."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ctm_postal_code
+        description: "Código Postal."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ctm_country
+        description: "País da empresa."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ctm_phone
+        description: "Telefone de contacto."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ctm_fax
+        description: "Número de Fax."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ctm_insert_date
+        description: "Data/Hora de atualização na camada Silver."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_dim_employees
+    description: "Dados cadastrais e hierarquia interna de funcionários."
+    columns:
+      - name: emp_employee_id
+        description: "Código do funcionário (PK)."
+        data_tests:
+          - unique
+          - not_null
+      - name: emp_last_name
+        description: "Apelido do funcionário."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_first_name
+        description: "Primeiro nome do funcionário."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_title
+        description: "Cargo atual do funcionário."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_title_of_courtesy
+        description: "Pronome de tratamento (ex: Mr., Dr.)."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_birth_date
+        description: "Data de nascimento."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1899-12-31' as timestamp)"
+                max_value: "cast('2020-01-01' as timestamp)"
+      - name: emp_hire_date
+        description: "Data de contratação."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1899-12-31' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+      - name: emp_address
+        description: "Morada."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_city
+        description: "Cidade."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_region
+        description: "Região ou Estado."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_postal_code
+        description: "Código Postal."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_country
+        description: "País."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_home_phone
+        description: "Telefone residencial."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_extension
+        description: "Ramal interno."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_reports_to
+        description: "ID do gerente (Auto-relacionamento)."
+        data_tests:
+          - not_null
+          - relationships:
+              severity: warn
+              arguments:
+                to: ref('pre_dim_employees')
+                field: emp_employee_id
+      - name: emp_notes
+        description: "Anotações do RH."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: emp_insert_date
+        description: "Auditoria."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1899-12-31' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_dim_products
+    description: "Catálogo mestre de produtos e status de armazenamento."
+    columns:
+      - name: prd_product_id
+        description: "Código do produto (PK)."
+        data_tests:
+          - unique
+          - not_null
+      - name: prd_product_name
+        description: "Nome comercial do produto."
+        data_tests:
+          - not_null
+      - name: sup_supplier_id
+        description: "Chave Estrangeira para Fornecedores."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('pre_dim_suppliers')
+                field: sup_supplier_id
+      - name: cat_category_id
+        description: "Chave Estrangeira para Categorias."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('pre_dim_categories')
+                field: cat_category_id
+      - name: prd_quantity_per_unit
+        description: "Descrição de embalagem por unidade."
+        data_tests:
+          - not_null
+      - name: prd_unit_price
+        description: "Preço unitário base."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: prd_units_in_stock
+        description: "Unidades atualmente em stock."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: prd_units_on_order
+        description: "Unidades atualmente encomendadas ao fornecedor."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: prd_reorder_level
+        description: "Ponto de rutura/nível de reposição."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: prd_is_discontinued
+        description: "Flag a indicar se o produto foi descontinuado."
+        data_tests:
+          - not_null
+      - name: prd_insert_date
+        description: "Data/Hora de atualização."
+        data_tests:
+          - not_null
+
+  - name: pre_dim_categories
+    description: "Categorias de agrupamento dos produtos."
+    columns:
+      - name: cat_category_id
+        description: "Código da categoria."
+        data_tests:
+          - unique
+          - not_null
+      - name: cat_category_name
+        description: "Nome da categoria."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: cat_description
+        description: "Descrição técnica da categoria."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: cat_picture
+        description: "Imagem ou foto associada (Base64)."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: cat_insert_date
+        description: "Data/Hora de atualização."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_dim_suppliers
+    description: "Cadastro de fornecedores globais."
+    columns:
+      - name: sup_supplier_id
+        description: "Código original do fornecedor."
+        data_tests:
+          - unique
+          - not_null
+      - name: sup_company_name
+        description: "Razão Social da empresa fornecedora."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: sup_contact_name
+        description: "Ponto de contacto do fornecedor."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: sup_contact_title
+        description: "Cargo do contacto."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: sup_address
+        description: "Morada."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: sup_city
+        description: "Cidade."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: sup_region
+        description: "Estado/Região."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: sup_postal_code
+        description: "Código Postal."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: sup_country
+        description: "País do fornecedor."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: sup_phone
+        description: "Telefone de contacto."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: sup_fax
+        description: "Fax do fornecedor."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: sup_homepage
+        description: "Website da empresa."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: sup_insert_date
+        description: "Data/Hora de atualização."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_dim_shippers
+    description: "Transportadoras parceiras para envios logisticos."
+    columns:
+      - name: shp_shipper_id
+        description: "Código original da transportadora."
+        data_tests:
+          - unique
+          - not_null
+      - name: shp_company_name
+        description: "Nome da transportadora."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: shp_phone
+        description: "Telefone de contacto logístico."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: shp_insert_date
+        description: "Data/Hora de atualização."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_dim_territories
+    description: "Territórios associados aos funcionários."
+    columns:
+      - name: ter_territory_id
+        description: "Código alfanumérico do território."
+        data_tests:
+          - unique
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ter_territory_description
+        description: "Nome descritivo do território."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: reg_region_id
+        description: "Chave Estrangeira para a Região macro."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('pre_dim_region')
+                field: reg_region_id
+      - name: ter_insert_date
+        description: "Data/Hora de atualização."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_dim_region
+    description: "Agrupamento geográfico macro."
+    columns:
+      - name: reg_region_id
+        description: "Código da Região."
+        data_tests:
+          - unique
+          - not_null
+      - name: reg_region_description
+        description: "Descrição da região (ex: Eastern)."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: reg_insert_date
+        description: "Data/Hora de atualização."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_dim_us_states
+    description: "Mapeamento dos estados dos EUA para padronização de moradas."
+    columns:
+      - name: ust_state_id
+        description: "Código regional do estado."
+        data_tests:
+          - unique
+          - not_null
+      - name: ust_state_name
+        description: "Nome completo do estado."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ust_state_abbr
+        description: "Abreviatura do estado."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              arguments:
+                min_value: 2
+                max_value: 2
+      - name: ust_state_region
+        description: "Região macro do estado."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: ust_insert_date
+        description: "Data/Hora de atualização."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
+
+  - name: pre_dim_customer_demographics
+    description: "Classificações e segmentos demográficos."
+    columns:
+      - name: cdm_customer_type_id
+        description: "ID do tipo demográfico."
+        data_tests:
+          - unique
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: cdm_customer_desc
+        description: "Descrição do perfil ou grupo de clientes."
+        data_tests:
+          - not_null
+          - dbt_utils.not_empty_string:
+              arguments:
+                trim_whitespace: true
+      - name: cdm_insert_date
+        description: "Data/Hora de atualização."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: "cast('1990-01-01' as timestamp)"
+                max_value: "cast('2030-12-31' as timestamp)"
