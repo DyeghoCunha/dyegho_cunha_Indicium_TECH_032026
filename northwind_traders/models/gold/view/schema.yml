@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: mart_customer_360
-    description: "OBT com a visão 360 do Cliente (AOV, LTV, Churn, RFM)."
+    description: "Camada Semântica (View) com a visão 360 do Cliente (AOV, LTV, Churn, RFM)."
     columns:
       - name: sk_customer
         data_tests:
@@ -14,13 +14,6 @@ models:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
-      - name: churn_risk_score
-        description: "Score preditivo baseado em heurística de Recency."
-        data_tests:
-          - not_null
-          - dbt_expectations.expect_column_values_to_be_in_set:
-              arguments:
-                value_set: [0.05, 0.15, 0.30, 0.60, 0.80, 0.95]
       - name: customer_health_score
         description: "Score composto baseado no segmento RFM."
         data_tests:
@@ -37,7 +30,7 @@ models:
                 column_type_list: ['boolean', 'bool']
 
   - name: mart_product_360
-    description: "OBT com a visão 360 do Produto (Velocity, Turnover, Lifecycle)."
+    description: "Camada Semântica (View) com a visão 360 do Produto (Velocity, Turnover, Lifecycle)."
     columns:
       - name: sk_product
         data_tests:

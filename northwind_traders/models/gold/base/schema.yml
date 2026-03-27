@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: mart_customer_360_base
+    description: "Tabela incremental física que processa as agregações pesadas de clientes apenas com dados dos últimos 3 dias."
+    columns:
+      - name: sk_customer
+        description: "Surrogate Key do Cliente."
+        data_tests:
+          - unique
+          - not_null
+
+  - name: mart_product_360_base
+    description: "Tabela incremental física que processa as agregações pesadas de produtos apenas com dados dos últimos 3 dias."
+    columns:
+      - name: sk_product
+        description: "Surrogate Key do Produto."
+        data_tests:
+          - unique
+          - not_null
