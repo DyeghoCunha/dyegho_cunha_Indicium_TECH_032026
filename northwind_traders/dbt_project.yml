@@ -24,19 +24,16 @@ models:
     silver:
       +catalog: "{{ var('catalog', 'indicium_dev') }}"
       +schema: silver
-      +materialized: incremental
     gold:
       +catalog: "{{ var('catalog', 'indicium_dev') }}"
       +schema: gold
-      +materialized: table
     bronze:
       +catalog: "{{ var('catalog', 'indicium_dev') }}"
       +schema: bronze
-      +materialized: view
     intermediate:
       +catalog: "{{ var('catalog', 'indicium_dev') }}"
       +schema: intermediate
-      +materialized: table
+  
 
 
 vars:

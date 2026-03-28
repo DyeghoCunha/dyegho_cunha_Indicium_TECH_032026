@@ -1,202 +1,209 @@
 version: 2
 
 models:
-  
+  - name: dim_date
+    description: "Tabela de tempo para suporte a análises de Time Intelligence."
+    columns:
+      - name: sk_date
+        data_tests: [unique, not_null]
+      - name: date_actual
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: '1996-01-01', max_value: '2030-12-31' }
+      - name: date_year
+      - name: date_month
+      - name: date_day_of_month
+      - name: date_quarter
+      - name: date_month_name
+      - name: date_day_name
+      - name: is_weekend
+
   - name: dim_customers
-    description: "Dimensão de Clientes com Surrogate Keys e atributos descritivos."
     columns:
       - name: sk_customer
-        description: "Surrogate Key (Hash MD5 do ctm_customer_id)."
-        data_tests:
-          - unique
-          - not_null
+        data_tests: [unique, not_null]
       - name: nk_customer_id
-        description: "Natural Key vinda do ERP."
+        data_tests: [not_null]
+      - name: ctm_company_name
+        data_tests: [not_null]
+      - name: ctm_phone
         data_tests:
-          - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              arguments: { regex: '^[0-9\-\(\)\s\.\+]*$' }
+      - name: ctm_contact_name
+      - name: ctm_contact_title
+      - name: ctm_address
+      - name: ctm_city
+      - name: ctm_region
+      - name: ctm_postal_code
+      - name: ctm_country
+      - name: ctm_fax
+      - name: silver_insert_date
+      - name: gold_insert_date
 
   - name: dim_products
-    description: "Dimensão desnormalizada de Produtos (inclui Fornecedor e Categoria)."
     columns:
       - name: sk_product
-        data_tests:
-          - unique
-          - not_null
+        data_tests: [unique, not_null]
       - name: nk_product_id
-        data_tests:
-          - not_null
+        data_tests: [not_null]
+      - name: nk_supplier_id
+      - name: nk_category_id
+      - name: prd_product_name
+      - name: cat_category_name
+      - name: cat_description
+      - name: sup_company_name
+      - name: sup_country
       - name: prd_unit_price
         data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              arguments:
-                min_value: 0
-                max_value: 10000
-
-  - name: dim_employees
-    description: "Dimensão de Funcionários com hierarquia embutida."
-    columns:
-      - name: sk_employee
+              arguments: { min_value: 0 }
+      - name: prd_is_discontinued
         data_tests:
-          - unique
-          - not_null
-      - name: sk_manager
-        description: "Surrogate Key apontando para o gestor."
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_employees')
-                field: sk_employee
-
-  - name: dim_shippers
-    description: "Dimensão de Transportadoras."
-    columns:
-      - name: sk_shipper
-        data_tests:
-          - unique
-          - not_null
-
-  - name: dim_customer_demographics
-    description: "Dimensão Demográfica / Segmentação RFM de Clientes."
-    columns:
-      - name: sk_customer_demographic
-        data_tests:
-          - unique
-          - not_null
-
-  - name: dim_region
-    description: "Dimensão de Regiões Macro."
-    columns:
-      - name: sk_region
-        data_tests:
-          - unique
-          - not_null
-
-  - name: dim_territories
-    description: "Dimensão de Territórios."
-    columns:
-      - name: sk_territory
-        data_tests:
-          - unique
-          - not_null
-      - name: sk_region
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_region')
-                field: sk_region
-
-  - name: dim_us_states
-    description: "Dimensão de Estados Americanos."
-    columns:
-      - name: sk_us_state
-        data_tests:
-          - unique
-          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              arguments: { value_set: [true, false] }
+      - name: prd_units_in_stock
+      - name: prd_units_on_order
+      - name: prd_reorder_level
+      - name: gold_insert_date
 
   - name: fct_orders
-    description: "Fato de pedidos contendo as SKs das dimensões."
+    description: "Fato de cabeçalho de pedidos."
     data_tests:
       - dbt_utils.expression_is_true:
-          arguments:
-            expression: >-
-              ord_order_date <= ord_required_date
+          arguments: { expression: "ord_order_date <= ord_required_date" }
     columns:
       - name: sk_order
-        data_tests:
-          - unique
-          - not_null
+        data_tests: [unique, not_null]
       - name: sk_customer
         data_tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('dim_customers')
-                field: sk_customer
+              arguments: { to: ref('dim_customers'), field: sk_customer }
       - name: sk_employee
         data_tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('dim_employees')
-                field: sk_employee
+              arguments: { to: ref('dim_employees'), field: sk_employee }
       - name: sk_shipper
         data_tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('dim_shippers')
-                field: sk_shipper
+              arguments: { to: ref('dim_shippers'), field: sk_shipper }
+      - name: nk_order_id
+      - name: ord_order_date
+      - name: ord_required_date
+      - name: ord_shipped_date
+      - name: ord_freight
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0 }
+      - name: ord_ship_name
+      - name: ord_ship_city
+      - name: ord_ship_region
+      - name: ord_ship_country
+      - name: gold_insert_date
 
   - name: fct_order_details
-    description: "Fato de detalhes do pedido (Grão: Linha do Pedido)."
+    description: "Fato de itens do pedido com métricas financeiras."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments: { combination_of_columns: [sk_order, sk_product] }
     columns:
       - name: sk_order_detail
-        data_tests:
-          - unique
-          - not_null
+        data_tests: [unique, not_null]
       - name: sk_order
         data_tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('fct_orders')
-                field: sk_order
+              arguments: { to: ref('fct_orders'), field: sk_order }
       - name: sk_product
         data_tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('dim_products')
-                field: sk_product
-      - name: ord_discount
+              arguments: { to: ref('dim_products'), field: sk_product }
+      - name: odt_quantity
         data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              arguments:
-                min_value: 0
-                max_value: 1
+              arguments: { min_value: 1 }
+      - name: net_amount
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0 }
+      - name: odt_discount
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0, max_value: 1 }
+      - name: gross_amount
+      - name: discount_amount
+      - name: gold_insert_date
 
   - name: fct_customer_demo
-    description: "Tabela Bridge ligando Clientes aos seus Segmentos Demográficos (RFM)."
     columns:
       - name: sk_customer_demo
-        data_tests:
-          - unique
-          - not_null
+        data_tests: [unique, not_null]
       - name: sk_customer
         data_tests:
-          - not_null
           - relationships:
-              arguments:
-                to: ref('dim_customers')
-                field: sk_customer
+              arguments: { to: ref('dim_customers'), field: sk_customer }
       - name: sk_customer_demographic
         data_tests:
-          - not_null
           - relationships:
-              arguments:
-                to: ref('dim_customer_demographics')
-                field: sk_customer_demographic
+              arguments: { to: ref('dim_customer_demographics'), field: sk_customer_demographic }
+      - name: nk_customer_id
+      - name: nk_customer_type_id
+      - name: gold_insert_date
 
   - name: fct_employee_territories
-    description: "Tabela Bridge ligando Funcionários aos seus Territórios."
     columns:
       - name: sk_employee_territory
-        data_tests:
-          - unique
-          - not_null
+        data_tests: [unique, not_null]
       - name: sk_employee
         data_tests:
-          - not_null
           - relationships:
-              arguments:
-                to: ref('dim_employees')
-                field: sk_employee
+              arguments: { to: ref('dim_employees'), field: sk_employee }
       - name: sk_territory
         data_tests:
-          - not_null
           - relationships:
-              arguments:
-                to: ref('dim_territories')
-                field: sk_territory
+              arguments: { to: ref('dim_territories'), field: sk_territory }
+      - name: nk_employee_id
+      - name: nk_territory_id
+      - name: gold_insert_date
+
+  - name: dim_employees
+    columns:
+      - name: sk_employee
+        data_tests: [unique, not_null]
+      - name: sk_manager
+        data_tests:
+          - relationships:
+              arguments: { to: ref('dim_employees'), field: sk_employee }
+      - name: emp_full_name
+      - name: emp_title
+      - name: gold_insert_date
+
+  - name: dim_shippers
+    columns:
+      - name: sk_shipper
+        data_tests: [unique, not_null]
+      - name: shp_company_name
+
+  - name: dim_region
+    columns:
+      - name: sk_region
+        data_tests: [unique, not_null]
+
+  - name: dim_territories
+    columns:
+      - name: sk_territory
+        data_tests: [unique, not_null]
+      - name: sk_region
+        data_tests:
+          - relationships:
+              arguments: { to: ref('dim_region'), field: sk_region }
+
+  - name: dim_us_states
+    columns:
+      - name: sk_us_state
+        data_tests: [unique, not_null]

@@ -1,4 +1,8 @@
-{{ config(materialized='table', schema='gold', tags=['intermediate', 'customer']) }}
+{{ config(
+    materialized='table',
+    schema='intermediate', 
+    tags=['intermediate', 'customer']
+) }}
 
 WITH order_aggregates AS (
   SELECT * FROM {{ ref('int_orders_aggregated') }}

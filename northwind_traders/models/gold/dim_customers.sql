@@ -1,7 +1,12 @@
 {{ config(
-  materialized = 'table',
-  schema = 'gold',
-  tags = ['gold', 'core', 'dimension']
+    materialized='table',
+    schema='gold',
+    tags=['gold', 'dimension', 'core'],
+    tblproperties={
+        'delta.logRetentionDuration': '7 days',
+        'delta.autoOptimize.autoCompact': 'auto',
+        'spark.databricks.delta.autoCompact.enabled': 'true'
+    }
 ) }}
 
 SELECT

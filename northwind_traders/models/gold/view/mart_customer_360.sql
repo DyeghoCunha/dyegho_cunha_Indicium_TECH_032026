@@ -12,8 +12,8 @@ WITH base AS (
     ctm_city,
     ctm_region,
     ctm_country,
-    CAST(COALESCE(first_order_date, {{ var("date_default") }}) AS DATE) AS first_order_date,
-    CAST(COALESCE(last_order_date, {{ var("date_default") }}) AS DATE) AS last_order_date,
+    CAST(COALESCE(first_order_date, {{ var("date_default") }}) AS DATE) AS first_order_clean_date,
+    CAST(COALESCE(last_order_date, {{ var("date_default") }}) AS DATE) AS last_order_clean_date,
     total_orders,
     total_revenue,
     avg_order_value,
@@ -31,10 +31,10 @@ SELECT
   ctm_city,
   ctm_region,
   ctm_country,
-  
-  first_order_date, 
-  last_order_date, 
-
+  first_order_clean_date AS first_order_date, 
+  last_order_clean_date AS last_order_date,
+  CAST(date_format(first_order_clean_date, 'yyyyMMdd') AS INT) AS sk_first_order_date,
+  CAST(date_format(last_order_clean_date, 'yyyyMMdd') AS INT) AS sk_last_order_date,
   CASE 
     WHEN last_order_date = CAST({{ var("date_default") }} AS DATE) THEN 9999
   ELSE DATEDIFF(CAST('{{ var("current_business_date") }}' AS DATE), last_order_date)

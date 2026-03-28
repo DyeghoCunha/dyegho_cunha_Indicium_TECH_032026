@@ -2,19 +2,92 @@ version: 2
 
 models:
   - name: mart_customer_360_base
-    description: "Tabela incremental física que processa as agregações pesadas de clientes apenas com dados dos últimos 3 dias."
+    description: "Visão consolidada 360 do cliente, unindo cadastro, métricas de comportamento e segmentação RFM."
     columns:
       - name: sk_customer
-        description: "Surrogate Key do Cliente."
+        data_tests: [unique, not_null]
+      - name: nk_customer_id
+        data_tests: [not_null]
+      - name: ctm_company_name
+        data_tests: [not_null]
+      - name: ctm_city
+      - name: ctm_region
+      - name: ctm_country
+      - name: first_order_date
         data_tests:
-          - unique
-          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments: { column_type: DATE }
+      - name: last_order_date
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments: { expression: "last_order_date >= first_order_date" }
+      - name: total_orders
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0 }
+      - name: total_revenue
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0 }
+      - name: avg_order_value
+        description: "Ticket Médio do cliente."
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0 }
+      - name: total_quantity
+      - name: avg_discount_pct
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0, max_value: 1 }
+      - name: avg_freight_per_order
+      - name: inter_purchase_interval_days
+        description: "Intervalo médio entre compras (Churn indicator)."
+      - name: late_deliveries
+        description: "Quantidade de pedidos entregues após o prazo."
+      - name: rfm_code
+        description: "Código da segmentação vindo da dim_customer_demographics."
+      - name: customer_segment
+        data_tests:
+          - not_null:
+              config: { severity: warn } 
+      
+      - name: base_calculated_at
+        data_tests: [not_null]
 
   - name: mart_product_360_base
-    description: "Tabela incremental física que processa as agregações pesadas de produtos apenas com dados dos últimos 3 dias."
+    description: "Visão consolidada do produto, unindo catálogo e métricas de performance de vendas."
     columns:
       - name: sk_product
-        description: "Surrogate Key do Produto."
+        data_tests: [unique, not_null]
+      - name: nk_product_id
+        data_tests: [not_null]
+      - name: prd_product_name
+        data_tests: [not_null]
+      - name: cat_category_name
+      - name: sup_company_name
+      - name: current_catalog_price
         data_tests:
-          - unique
-          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0 }
+      - name: prd_units_in_stock
+      - name: prd_is_discontinued
+      - name: total_quantity_sold
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0 }
+      - name: total_revenue
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0 }
+      - name: unique_customers
+        description: "Quantidade de clientes distintos que compraram este produto."
+      - name: first_sale_date
+      - name: last_sale_date
+      - name: quantity_sold_last_30d
+      - name: revenue_last_30d
+      - name: revenue_last_90d
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments: { expression: "revenue_last_90d >= revenue_last_30d" }
+      - name: base_calculated_at
+        data_tests: [not_null]

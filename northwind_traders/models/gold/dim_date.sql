@@ -1,7 +1,12 @@
 {{ config(
     materialized='table',
     schema='gold',
-    tags=['gold', 'dimensao']
+    tags=['gold', 'dimension', 'core'],
+    tblproperties={
+        'delta.logRetentionDuration': '7 days',
+        'delta.autoOptimize.autoCompact': 'auto',
+        'spark.databricks.delta.autoCompact.enabled': 'true'
+    }
 ) }}
 
 WITH date_series AS (

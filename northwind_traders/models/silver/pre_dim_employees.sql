@@ -1,8 +1,7 @@
 {{ config(
-    materialized = 'incremental',
-    incremental_strategy = 'merge',
-    unique_key = 'emp_employee_id',
-    tags = ['silver', 'dimensao']
+    materialized='table',
+    schema='silver',
+    tags=['silver', 'dimension']
 ) }}
 
 SELECT
@@ -29,13 +28,4 @@ SELECT
 FROM
     {{ ref('brz_erp_employees') }}
 
-{% if is_incremental() %}
-WHERE
-    CAST(
-        _insert_date AS TIMESTAMP
-    ) > (
-        SELECT
-            COALESCE(MAX(bronze_insert_date), CAST({{ var('date_default') }} AS TIMESTAMP))
-        FROM
-            {{ this }})
-        {% endif %}
+

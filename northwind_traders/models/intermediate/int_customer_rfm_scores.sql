@@ -1,10 +1,8 @@
-{{
-  config(
+{{ config(
     materialized='table',
-    schema='silver',
-    tags=['intermediate', 'rfm','silver']
-  )
-}}
+    schema='intermediate', 
+    tags=['intermediate', 'customer']
+) }}
 
 WITH customer_orders AS (
   SELECT 

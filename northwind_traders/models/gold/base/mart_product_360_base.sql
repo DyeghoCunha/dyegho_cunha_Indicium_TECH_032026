@@ -1,9 +1,15 @@
 {{ config(
-    materialized='incremental',
-    unique_key='sk_product',
-    incremental_strategy='merge',
-    schema='gold',
-    tags=['gold', 'product', 'base']
+    materialized = 'incremental',
+    unique_key = 'sk_product',
+    incremental_strategy = 'merge',
+    schema = 'gold',
+    cluster_by = ['sk_product'],
+    tags = ['gold', 'product', 'base'],
+    tblproperties = {
+        'delta.logRetentionDuration': '7 days',
+        'delta.autoOptimize.autoCompact': 'auto',
+        'delta.autoOptimize.optimizeWrite': 'true'
+    }
 ) }}
 
 WITH changed_products AS (

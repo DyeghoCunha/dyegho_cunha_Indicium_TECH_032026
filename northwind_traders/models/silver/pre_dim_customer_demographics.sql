@@ -1,8 +1,7 @@
 {{ config(
-  materialized = 'incremental',
-  incremental_strategy = 'merge',
-  unique_key = 'cdm_customer_type_id',
-  tags = ['silver', 'dimensao']
+    materialized='table',
+    schema='silver',
+    tags=['silver', 'dimension']
 ) }}
 
 WITH unique_segments AS (
@@ -25,11 +24,3 @@ SELECT
 FROM
   unique_segments
 
-{% if is_incremental() %}
-WHERE
-  last_calculated_at > (
-    SELECT
-      COALESCE(MAX(bronze_insert_date), CAST({{ var('date_default') }} AS TIMESTAMP))
-    FROM
-      {{ this }})
-{% endif %}

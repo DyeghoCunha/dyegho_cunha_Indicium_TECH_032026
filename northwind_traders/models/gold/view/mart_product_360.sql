@@ -17,8 +17,8 @@ WITH base AS (
     total_quantity_sold,
     total_revenue,
     unique_customers,
-    first_sale_date,
-    last_sale_date,
+    COALESCE(first_sale_date, CAST({{ var("date_default") }} AS DATE)) AS first_sale_clean_date,
+    COALESCE(last_sale_date, CAST({{ var("date_default") }} AS DATE)) AS last_sale_clean_date,
     quantity_sold_last_30d,
     revenue_last_30d,
     revenue_last_90d
@@ -34,15 +34,13 @@ SELECT
   CAST(COALESCE(current_catalog_price, 0) AS DECIMAL(10,2)) AS current_catalog_price,
   COALESCE(prd_units_in_stock, 0) AS prd_units_in_stock,
   COALESCE(prd_is_discontinued, 0) AS prd_is_discontinued,
-  
   COALESCE(total_quantity_sold, 0) AS total_quantity_sold,
   COALESCE(unique_customers, 0) AS unique_customers,
-  
   CAST(COALESCE(total_revenue, 0) AS DECIMAL(15,2)) AS total_revenue,
-  
-  first_sale_date,
-  last_sale_date,
-  
+  first_sale_clean_date AS first_sale_date,
+  last_sale_clean_date AS last_sale_date,
+  CAST(date_format(first_sale_clean_date, 'yyyyMMdd') AS INT) AS sk_first_sale_date,
+  CAST(date_format(last_sale_clean_date, 'yyyyMMdd') AS INT) AS sk_last_sale_date,
   COALESCE(DATEDIFF(CURRENT_DATE(), last_sale_date), 999) AS days_since_last_sale,
   
   CAST(

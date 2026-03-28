@@ -455,7 +455,7 @@ models:
         data_tests:
           - not_null
           - relationships:
-              severity: warn
+              config: {severity: warn}
               arguments:
                 to: ref('pre_dim_employees')
                 field: emp_employee_id
