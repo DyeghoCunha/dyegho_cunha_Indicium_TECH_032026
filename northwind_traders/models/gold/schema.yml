@@ -1,6 +1,7 @@
 version: 2
 
 models:
+
   - name: dim_date
     description: "Tabela de tempo para suporte a análises de Time Intelligence."
     columns:
@@ -62,7 +63,7 @@ models:
       - name: prd_is_discontinued
         data_tests:
           - dbt_expectations.expect_column_values_to_be_in_set:
-              arguments: { value_set: [true, false] }
+              arguments: { value_set: [1, 0] }
       - name: prd_units_in_stock
       - name: prd_units_on_order
       - name: prd_reorder_level
