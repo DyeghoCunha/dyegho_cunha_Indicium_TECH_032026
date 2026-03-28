@@ -87,6 +87,64 @@ models:
       - name: revenue_last_90d
         data_tests:
           - dbt_utils.expression_is_true:
-              arguments: { expression: "revenue_last_90d >= revenue_last_30d" }
+              arguments: { expression: ">= revenue_last_30d" }
       - name: base_calculated_at
         data_tests: [not_null]
+      - name: avg_daily_sales_30d
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: estimated_days_of_stock
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0 
+
+  - name: mart_market_basket_base
+    description: "Tabela física base com a contagem bruta de produtos comprados juntos."
+    columns:
+      - name: sk_product_a
+        description: "Chave surrogate do Produto Principal."
+        data_tests:
+          - not_null
+      - name: sk_product_b
+        description: "Chave surrogate do Produto Comprado Junto."
+        data_tests:
+          - not_null
+      - name: times_bought_together
+        description: "Contagem bruta de pedidos que contêm ambos os produtos."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+
+  - name: mart_cohort_retention_base
+    description: "Tabela física base com a contagem absoluta de clientes retidos por safra."
+    columns:
+      - name: cohort_month
+        description: "Mês (truncado) da primeira compra do cliente."
+        data_tests:
+          - not_null
+      - name: cohort_index
+        description: "Distância em meses desde a primeira compra (0 = mês inicial)."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: initial_customers
+        description: "Quantidade total de clientes que entraram na safra original."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+      - name: active_customers
+        description: "Quantidade de clientes daquela safra que compraram neste índice de mês."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0

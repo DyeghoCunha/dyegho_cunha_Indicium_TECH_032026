@@ -17,7 +17,9 @@ clean-targets:
   
 flags:
   use_materialization_v2: true
-
+  use_managed_iceberg: true
+  use_concurrent_microbatch: true
+  
 models:
   northwind_analytics:
 

@@ -1,7 +1,6 @@
 version: 2
 
 models:
-
   - name: mart_customer_360
     description: "Camada de apresentação para BI com KPIs de Recência, Churn e Saúde do Cliente."
     columns:
@@ -12,7 +11,6 @@ models:
       - name: ctm_company_name
       - name: first_order_date
       - name: last_order_date
-
       - name: recency_days
         description: "Dias desde a última compra (calculado contra a current_business_date)."
         data_tests:
@@ -20,7 +18,6 @@ models:
               arguments: { min_value: 0 }
       - name: customer_tenure_days
         description: "Tempo de vida do cliente em dias (Last - First Order)."
-
       - name: total_orders
       - name: total_revenue
         data_tests:
@@ -29,7 +26,6 @@ models:
                 min_value: 0
       - name: customer_lifetime_value
         description: "Soma total de receita gerada pelo cliente."
-
       - name: rfm_code
         data_tests:
           - not_null
@@ -40,6 +36,12 @@ models:
         data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments: { min_value: 0.05, max_value: 0.95 }
+      - name: revenue_at_risk
+        description: "Valor do Ticket Médio multiplicado pela probabilidade de churn do cliente."
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
 
   - name: mart_product_360
     description: "Camada de apresentação para BI com KPIs de Estoque, Giro e Ciclo de Vida do Produto."
@@ -61,6 +63,68 @@ models:
         data_tests:
           - dbt_expectations.expect_column_values_to_be_in_set:
               arguments:
-                value_set: ['NO_RECENT_SALES', 'INTRODUCTION', 'GROWTH', 'DECLINE', 'MATURITY']
+                value_set:
+                  [
+                    "NO_RECENT_SALES",
+                    "INTRODUCTION",
+                    "GROWTH",
+                    "DECLINE",
+                    "MATURITY",
+                  ]
       - name: view_calculated_at
         data_tests: [not_null]
+
+  - name: mart_market_basket
+    description: "Análise de cesta de compras (Quais produtos são comprados juntos)."
+    columns:
+      - name: sk_product_a
+        description: "Chave surrogate do Produto Principal."
+        data_tests:
+          - not_null
+      - name: sk_product_b
+        description: "Chave surrogate do Produto Comprado Junto."
+        data_tests:
+          - not_null
+      - name: times_bought_together
+        description: "Quantas vezes os dois produtos saíram no mesmo pedido."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+      - name: recommendation_rank
+        description: "Ranking de recomendação 1, 2, 3... para o produto A."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+
+  - name: mart_cohort_retention
+    description: "Análise de retenção de clientes por safra (mês da primeira compra)."
+    columns:
+      - name: cohort_month
+        description: "Mês em que o cliente fez o primeiro pedido."
+        data_tests:
+          - not_null
+      - name: cohort_index
+        description: "Meses decorridos desde a primeira compra (0 = Mês de entrada)."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: initial_customers
+        description: "Tamanho original da safra no Mês 0."
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+      - name: retention_rate
+        description: "Porcentagem de clientes da safra original que compraram neste mês."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0.0
+                max_value: 1.0
