@@ -5,9 +5,21 @@
 ) }}
 
 WITH order_aggregates AS (
-  SELECT * FROM {{ ref('int_orders_aggregated') }}
+    SELECT 
+        sk_order,
+        sk_customer,
+        ord_order_date,
+        ord_freight,
+        order_value,
+        order_discount,
+        order_quantity,
+        products_per_order,
+        order_to_ship_days,
+        is_late,
+        late_by_days
+    FROM 
+        {{ ref('int_orders_aggregated') }}
 ),
-
 customer_base AS (
   SELECT 
     sk_customer,

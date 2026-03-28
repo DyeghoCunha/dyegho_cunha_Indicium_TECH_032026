@@ -5,9 +5,22 @@
 ) }}
 
 WITH rfm_scores AS (
-  SELECT * FROM {{ ref('int_customer_rfm_scores') }}
+    SELECT 
+        customer_id,
+        recency_days,
+        frequency,
+        monetary,
+        first_order_date,
+        last_order_date,
+        avg_order_value,
+        customer_tenure_days,
+        r_score,
+        f_score,
+        m_score,
+        rfm_code,
+        calculated_at
+    FROM {{ ref('int_customer_rfm_scores') }}
 ),
-
 customer_segments AS (
   SELECT 
     customer_id,
