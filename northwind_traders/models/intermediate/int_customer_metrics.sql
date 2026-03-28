@@ -1,7 +1,13 @@
 {{ config(
     materialized='table',
-    schema='intermediate', 
-    tags=['intermediate', 'customer']
+    schema='intermediate',
+    tags=['intermediate', 'customer'],
+    cluster_by=['sk_customer'],
+    tblproperties={
+        'delta.logRetentionDuration': '7 days',
+        'delta.autoOptimize.autoCompact': 'true',
+        'delta.autoOptimize.optimizeWrite': 'true'
+    }
 ) }}
 
 WITH order_aggregates AS (

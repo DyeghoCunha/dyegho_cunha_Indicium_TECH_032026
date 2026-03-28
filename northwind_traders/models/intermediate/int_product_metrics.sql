@@ -1,7 +1,13 @@
 {{ config(
-  materialized = 'table',
-  schema = 'intermediate',
-  tags = ['intermediate', 'product']
+    materialized='table',
+    schema='intermediate',
+    tags=['intermediate', 'product'],
+    cluster_by=['sk_product'],
+    tblproperties={
+        'delta.logRetentionDuration': '7 days',
+        'delta.autoOptimize.autoCompact': 'true',
+        'delta.autoOptimize.optimizeWrite': 'true'
+    }
 ) }}
 
 WITH fct_details AS (
