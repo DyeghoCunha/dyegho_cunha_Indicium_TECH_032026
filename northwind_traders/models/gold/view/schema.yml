@@ -24,8 +24,9 @@ models:
       - name: total_orders
       - name: total_revenue
         data_tests:
-          - dbt_expectations.expect_column_values_to_be_of_type:
-              arguments: { column_type: "DECIMAL(10,2)" }
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
       - name: customer_lifetime_value
         description: "Soma total de receita gerada pelo cliente."
 
