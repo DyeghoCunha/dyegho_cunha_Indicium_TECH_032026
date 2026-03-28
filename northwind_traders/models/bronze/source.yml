@@ -3,21 +3,29 @@ version: 2
 sources:
   - name: erp_northwind
     description: "Camada Bronze contendo os dados brutos extraídos do ERP PostgreSQL. Fonte de verdade para a Medallion Architecture."
-    catalog: "{{ var('catalog', 'indicium_dev') }}"
     schema: landing 
     loader: pyspark_ingestion
-    loaded_at_field: _insert_date
     
     config:
-      severity: warn
+      loaded_at_field: _insert_date
+      freshness:
+        warn_after: {count: 24, period: hour}
+        error_after: {count: 48, period: hour}
 
     tables:
       - name: categories
         description: "Categorias de produtos da Northwind."
         columns:
           - name: category_id
-            data_tests: [unique, not_null]
+            data_tests:
+              - unique:
+                  config: {severity: warn}
+              - not_null:
+                  config: {severity: warn}
           - name: category_name
+            data_tests:
+              - not_null:
+                  config: {severity: warn}
           - name: description
           - name: picture
           - name: _source_file
@@ -28,7 +36,9 @@ sources:
         description: "Relacionamento entre clientes e tipos demográficos (N:N)."
         data_tests:
           - dbt_utils.unique_combination_of_columns:
-              combination_of_columns: [customer_id, customer_type_id]
+              config: {severity: warn}
+              arguments:
+                combination_of_columns: [customer_id, customer_type_id]
         columns:
           - name: customer_id
           - name: customer_type_id
@@ -40,7 +50,11 @@ sources:
         description: "Descrições de agrupamentos demográficos de clientes."
         columns:
           - name: customer_type_id
-            data_tests: [unique, not_null]
+            data_tests:
+              - unique:
+                  config: {severity: warn}
+              - not_null:
+                  config: {severity: warn}
           - name: customer_desc
           - name: _source_file
           - name: _insert_date
@@ -50,8 +64,15 @@ sources:
         description: "Cadastro mestre de clientes."
         columns:
           - name: customer_id
-            data_tests: [unique, not_null]
+            data_tests:
+              - unique:
+                  config: {severity: warn}
+              - not_null:
+                  config: {severity: warn}
           - name: company_name
+            data_tests:
+              - not_null:
+                  config: {severity: warn}
           - name: contact_name
           - name: contact_title
           - name: address
@@ -69,7 +90,9 @@ sources:
         description: "Mapeamento de funcionários por território de atuação."
         data_tests:
           - dbt_utils.unique_combination_of_columns:
-              combination_of_columns: [employee_id, territory_id]
+              config: {severity: warn}
+              arguments:
+                combination_of_columns: [employee_id, territory_id]
         columns:
           - name: employee_id
           - name: territory_id
@@ -81,9 +104,19 @@ sources:
         description: "Dados cadastrais e hierárquicos dos funcionários."
         columns:
           - name: employee_id
-            data_tests: [unique, not_null]
+            data_tests:
+              - unique:
+                  config: {severity: warn}
+              - not_null:
+                  config: {severity: warn}
           - name: last_name
+            data_tests:
+              - not_null:
+                  config: {severity: warn}
           - name: first_name
+            data_tests:
+              - not_null:
+                  config: {severity: warn}
           - name: title
           - name: title_of_courtesy
           - name: birth_date
@@ -107,7 +140,9 @@ sources:
         description: "Detalhamento dos itens vendidos em cada pedido."
         data_tests:
           - dbt_utils.unique_combination_of_columns:
-              combination_of_columns: [order_id, product_id]
+              config: {severity: warn}
+              arguments:
+                combination_of_columns: [order_id, product_id]
         columns:
           - name: order_id
           - name: product_id
@@ -122,7 +157,11 @@ sources:
         description: "Cabeçalho dos pedidos e informações logísticas."
         columns:
           - name: order_id
-            data_tests: [unique, not_null]
+            data_tests:
+              - unique:
+                  config: {severity: warn}
+              - not_null:
+                  config: {severity: warn}
           - name: customer_id
           - name: employee_id
           - name: order_date
@@ -144,8 +183,15 @@ sources:
         description: "Catálogo de produtos da Northwind."
         columns:
           - name: product_id
-            data_tests: [unique, not_null]
+            data_tests:
+              - unique:
+                  config: {severity: warn}
+              - not_null:
+                  config: {severity: warn}
           - name: product_name
+            data_tests:
+              - not_null:
+                  config: {severity: warn}
           - name: supplier_id
           - name: category_id
           - name: quantity_per_unit
@@ -162,7 +208,11 @@ sources:
         description: "Cadastro de regiões geográficas."
         columns:
           - name: region_id
-            data_tests: [unique, not_null]
+            data_tests:
+              - unique:
+                  config: {severity: warn}
+              - not_null:
+                  config: {severity: warn}
           - name: region_description
           - name: _source_file
           - name: _insert_date
@@ -172,8 +222,15 @@ sources:
         description: "Transportadoras (Shippers) utilizadas."
         columns:
           - name: shipper_id
-            data_tests: [unique, not_null]
+            data_tests:
+              - unique:
+                  config: {severity: warn}
+              - not_null:
+                  config: {severity: warn}
           - name: company_name
+            data_tests:
+              - not_null:
+                  config: {severity: warn}
           - name: phone
           - name: _source_file
           - name: _insert_date
@@ -183,8 +240,15 @@ sources:
         description: "Fornecedores de produtos."
         columns:
           - name: supplier_id
-            data_tests: [unique, not_null]
+            data_tests:
+              - unique:
+                  config: {severity: warn}
+              - not_null:
+                  config: {severity: warn}
           - name: company_name
+            data_tests:
+              - not_null:
+                  config: {severity: warn}
           - name: contact_name
           - name: contact_title
           - name: address
@@ -203,7 +267,11 @@ sources:
         description: "Territórios de venda vinculados a regiões."
         columns:
           - name: territory_id
-            data_tests: [unique, not_null]
+            data_tests:
+              - unique:
+                  config: {severity: warn}
+              - not_null:
+                  config: {severity: warn}
           - name: territory_description
           - name: region_id
           - name: _source_file
@@ -214,7 +282,11 @@ sources:
         description: "Mapeamento de estados dos Estados Unidos."
         columns:
           - name: state_id
-            data_tests: [unique, not_null]
+            data_tests:
+              - unique:
+                  config: {severity: warn}
+              - not_null:
+                  config: {severity: warn}
           - name: state_name
           - name: state_abbr
           - name: state_region

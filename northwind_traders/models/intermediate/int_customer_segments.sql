@@ -1,10 +1,8 @@
-{{
-  config(
+{{ config(
     materialized='table',
-    schema='silver',
-    tags=['intermediate', 'rfm', 'segmentation','silver']
-  )
-}}
+    schema='intermediate', 
+    tags=['intermediate', 'customer']
+) }}
 
 WITH rfm_scores AS (
   SELECT * FROM {{ ref('int_customer_rfm_scores') }}

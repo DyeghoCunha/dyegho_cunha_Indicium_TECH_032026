@@ -1,8 +1,7 @@
 {{ config(
-  materialized = 'incremental',
-  incremental_strategy = 'merge',
-  unique_key = 'prd_product_id',
-  tags = ['silver']
+    materialized='table',
+    schema='silver',
+    tags=['silver', 'dimension']
 ) }}
 
 SELECT
@@ -25,13 +24,4 @@ FROM
     'brz_erp_products'
   ) }}
 
-{% if is_incremental() %}
-WHERE
-  CAST(
-    _insert_date AS TIMESTAMP
-  ) > (
-    SELECT
-      COALESCE(MAX(bronze_insert_date), CAST({{ var('date_default') }} AS TIMESTAMP))
-    FROM
-      {{ this }})
-    {% endif %}
+

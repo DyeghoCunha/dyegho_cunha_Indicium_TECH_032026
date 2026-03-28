@@ -14,6 +14,9 @@ snapshot-paths: ["snapshots"]
 clean-targets:
   - "target"
   - "dbt_packages"
+  
+flags:
+  use_materialization_v2: true
 
 models:
   northwind_analytics:
@@ -21,26 +24,26 @@ models:
     silver:
       +catalog: "{{ var('catalog', 'indicium_dev') }}"
       +schema: silver
-      +materialized: incremental
     gold:
       +catalog: "{{ var('catalog', 'indicium_dev') }}"
       +schema: gold
-      +materialized: table
     bronze:
       +catalog: "{{ var('catalog', 'indicium_dev') }}"
       +schema: bronze
-      +materialized: view
     intermediate:
       +catalog: "{{ var('catalog', 'indicium_dev') }}"
       +schema: intermediate
-      +materialized: table
+  
+
 
 vars:
   catalog: "indicium_dev" 
-  nao_inf: "'Não Informado'"
+  nao_inf: "'N/A'"
   date_default: "'1960-01-01'"
   vazio: "''"
+  current_business_date: '1998-05-31'
 
 
 on-run-end:
   - "{{ log_dbt_results(results) }}"
+

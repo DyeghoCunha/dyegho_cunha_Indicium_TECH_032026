@@ -1,10 +1,8 @@
-{{
-  config(
+{{ config(
     materialized='table',
-    schema='silver',
-    tags=['intermediate', 'rfm','silver']
-  )
-}}
+    schema='intermediate', 
+    tags=['intermediate', 'customer']
+) }}
 
 WITH customer_orders AS (
   SELECT 
@@ -38,7 +36,7 @@ customer_metrics AS (
     customer_id,
     
     MAX(order_date) AS last_order_date,
-    DATEDIFF(CURRENT_DATE(), MAX(order_date)) AS recency_days,
+    DATEDIFF(CAST('{{ var("current_business_date") }}' AS DATE), MAX(order_date)) AS recency_days,
     
     COUNT(DISTINCT order_id) AS frequency,
     
@@ -62,9 +60,10 @@ rfm_scores AS (
     last_order_date,
     avg_order_value,
     customer_tenure_days,
-    NTILE(5) OVER (ORDER BY recency_days ASC) AS r_score,
-    NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,
-    NTILE(5) OVER (ORDER BY monetary DESC) AS m_score
+
+    NTILE(5) OVER (ORDER BY recency_days DESC) AS r_score,
+    NTILE(5) OVER (ORDER BY frequency ASC) AS f_score,
+    NTILE(5) OVER (ORDER BY monetary ASC) AS m_score
     
   FROM customer_metrics
 )

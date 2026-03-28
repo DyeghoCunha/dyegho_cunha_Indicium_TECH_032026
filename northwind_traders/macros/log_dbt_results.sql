@@ -1,6 +1,6 @@
 {% macro log_dbt_results(results) %}
   {% if execute %}
-    {{ log("========== RESUMO DA EXECUÇÃO OMNIFY ==========", info=True) }}
+    {{ log("========== RESUMO DA EXECUÇÃO NORTHWIND ==========", info=True) }}
     
     {% for res in results %}
       {% set line -%}

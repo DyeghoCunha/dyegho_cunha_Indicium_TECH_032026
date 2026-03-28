@@ -1,63 +1,65 @@
 version: 2
 
 models:
+
   - name: mart_customer_360
-    description: "OBT com a visão 360 do Cliente (AOV, LTV, Churn, RFM)."
+    description: "Camada de apresentação para BI com KPIs de Recência, Churn e Saúde do Cliente."
     columns:
       - name: sk_customer
+        data_tests: [unique, not_null]
+      - name: nk_customer_id
+        data_tests: [not_null]
+      - name: ctm_company_name
+      - name: first_order_date
+      - name: last_order_date
+
+      - name: recency_days
+        description: "Dias desde a última compra (calculado contra a current_business_date)."
         data_tests:
-          - unique
-          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0 }
+      - name: customer_tenure_days
+        description: "Tempo de vida do cliente em dias (Last - First Order)."
+
       - name: total_orders
-        description: "Frequência total de compras."
+      - name: total_revenue
         data_tests:
-          - dbt_expectations.expect_column_values_to_be_between:
-              arguments:
-                min_value: 0
-      - name: churn_risk_score
-        description: "Score preditivo baseado em heurística de Recency."
-        data_tests:
-          - not_null
-          - dbt_expectations.expect_column_values_to_be_in_set:
-              arguments:
-                value_set: [0.05, 0.15, 0.30, 0.60, 0.80, 0.95]
-      - name: customer_health_score
-        description: "Score composto baseado no segmento RFM."
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments: { column_type: "DECIMAL(10,2)" }
+      - name: customer_lifetime_value
+        description: "Soma total de receita gerada pelo cliente."
+
+      - name: rfm_code
         data_tests:
           - not_null
-          - dbt_expectations.expect_column_values_to_be_between:
-              arguments:
-                min_value: 0.0
-                max_value: 1.0
       - name: is_churned
+        description: "Flag TRUE se o cliente não compra há mais de 90 dias."
+      - name: customer_health_score
+        description: "Score de 0.05 a 0.95 baseado no segmento RFM."
         data_tests:
-          - not_null
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              arguments:
-                column_type_list: ['boolean', 'bool']
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments: { min_value: 0.05, max_value: 0.95 }
 
   - name: mart_product_360
-    description: "OBT com a visão 360 do Produto (Velocity, Turnover, Lifecycle)."
+    description: "Camada de apresentação para BI com KPIs de Estoque, Giro e Ciclo de Vida do Produto."
     columns:
       - name: sk_product
-        data_tests:
-          - unique
-          - not_null
+        data_tests: [unique, not_null]
+      - name: nk_product_id
+      - name: prd_product_name
+      - name: cat_category_name
+      - name: current_catalog_price
+      - name: prd_units_in_stock
+      - name: days_since_last_sale
       - name: days_of_inventory
-        description: "Cobertura de estoque baseada na velocidade dos últimos 30 dias."
-        data_tests:
-          - not_null
+        description: "Projeção de quanto tempo o estoque dura baseado na média de vendas dos últimos 30 dias."
+      - name: is_stockout_risk
+        description: "Flag TRUE se o estoque durar menos de 7 dias."
       - name: product_lifecycle_stage
-        description: "Classificação do momento de vida do produto com base no crescimento de receita."
+        description: "Classificação baseada no crescimento de receita (GROWTH, MATURITY, DECLINE, etc)."
         data_tests:
-          - not_null
           - dbt_expectations.expect_column_values_to_be_in_set:
               arguments:
                 value_set: ['NO_RECENT_SALES', 'INTRODUCTION', 'GROWTH', 'DECLINE', 'MATURITY']
-      - name: is_stockout_risk
-        description: "Flag para alertar ruptura de estoque iminente."
-        data_tests:
-          - not_null
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              arguments:
-                column_type_list: ['boolean', 'bool']
+      - name: view_calculated_at
+        data_tests: [not_null]

@@ -1,6 +1,7 @@
 {{ config(
   materialized = 'view',
-  tags = ['bronze', 'erp_northwind']
+  schema = 'bronze',
+  tags = ['bronze', 'ingestion']
 ) }}
 
 SELECT
